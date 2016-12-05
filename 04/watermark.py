@@ -94,7 +94,6 @@ def recover_watermark(model='haar'):
 
 
 
-
 def w2d(img):
     model = 'haar'
     image_array = convert_image(image, 512)

@@ -6,11 +6,11 @@ import os
 current_path = str(os.path.dirname(__file__))
 
 image = 'cat.jpg'
-watermark = 'pani.jpg'
+watermark = 'rings.jpg'
 model = 'haar'
 level = 3
 k = 0.9
-q = 0.009
+q = 0.0009
 
 
 def convert_image(image, size):
@@ -109,13 +109,15 @@ def extract_wm(coeffs_img, coeffs_img_wm):
     LL3 = coeffs_img[0]
     WM3 = coeffs_img_wm[0]
     len = coeffs_img[0].__len__()
+    watermarkArray = convert_image(watermark, 256)
+    coeffs_watermark = process_coefficients(watermarkArray, model, level=level)
     # WMI = np.zeros((len, len))
 
     for x in xrange(len):
         for y in xrange(len):
-            coeffs_img_wm[0][x][y] = WM3[x][y] - k * LL3[x][y]
+            coeffs_watermark[0][x][y] = (WM3[x][y] - k * LL3[x][y])/q
 
-    return coeffs_img_wm
+    return coeffs_watermark
 
 
 def extract(watermarked):
