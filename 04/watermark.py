@@ -1,26 +1,25 @@
 import numpy as np
 import pywt
-import cv2 
 import os
+from PIL import Image
 
 current_path = str(os.path.dirname(__file__))  
 
 image = 'mis1.jpg'   
 watermark = 'mis2.jpg' 
 
-def convert_image(image, size):
-    imArray = cv2.imread(current_path + '/pictures/' + image)
+def convert_image(image_name, size):
+    img = Image.open('./pictures/' + image_name).resize((size, size))
+    img = img.convert('L')
+    img.save('./dataset/' + image_name)
 
-    imArray = cv2.resize(imArray, (size, size))
-    imArray = cv2.cvtColor( imArray,cv2.COLOR_RGB2GRAY )
-    # print imArray[0][0]               #print color for pixel(0,0)
-    cv2.imwrite(current_path + '/dataset/' + image, imArray)
+    image_array = np.array(img)
+    image_array = np.float32(image_array) 
+    image_array /= 255 
+    print image_array[0][0]               #qrcode white color = 1.0
+    print image_array[10][10]             #qrcode black color = 0.0  
 
-    imArray =  np.float32(imArray) 
-    imArray /= 255;
-    # print imArray[0][0]               #qrcode white color = 1.0
-    # print imArray[10][10]             #qrcode black color = 0.0           
-    return imArray
+    return image_array
 
 def process_coefficients(imArray, model, level):
     coeffs=pywt.wavedec2(data = imArray, wavelet = model, level = level)
@@ -72,15 +71,16 @@ def get_watermark(coeffs_watermarked_image):
     return watermark
 
 
-def recover_watermark(imArray, model='haar'):
-    imArray = cv2.imread(current_path + '/result/image_with_watermark.jpg')
+def recover_watermark(model='haar'):
+    img = Image.open('./result/image_with_watermark.jpg')
+    img = img.convert('L')
 
-    imArray = cv2.resize(imArray, (512, 512))
-    imArray = cv2.cvtColor( imArray,cv2.COLOR_RGB2GRAY )
-    imArray =  np.float32(imArray) 
-    imArray /= 255;
+    image_array = np.array(img)
+    image_array = np.float32(image_array) 
+    image_array /= 255 
 
-    coeffs_watermarked_image = process_coefficients(imArray, model, level=2)
+
+    coeffs_watermarked_image = process_coefficients(image_array, model, level=2)
     coeffs_watermark = get_watermark(coeffs_watermarked_image)
 
     # watermark reconstruction
@@ -89,7 +89,8 @@ def recover_watermark(imArray, model='haar'):
     watermark_array =  np.uint8(watermark_array)
 
 #Save result
-    cv2.imwrite(current_path + '/result/recovered_watermark.jpg', watermark_array)
+    img = Image.fromarray(watermark_array)
+    img.save('./result/recovered_watermark.jpg')
 
 
 
@@ -106,16 +107,17 @@ def w2d(img):
 
 
 # reconstruction
-    imArray_H=pywt.waverec2(coeffs_image, model)
-    imArray_H *= 255;
-    imArray_H =  np.uint8(imArray_H)
+    image_array_H=pywt.waverec2(coeffs_image, model)
+    image_array_H *= 255;
+    image_array_H =  np.uint8(image_array_H)
 
 #Save result
-    cv2.imwrite(current_path + '/result/image_with_watermark.jpg', imArray_H)
+    img = Image.fromarray(image_array_H)
+    img.save('./result/image_with_watermark.jpg')
 
 
 # recover images
-    recover_watermark(imArray = imArray_H, model=model)
+    recover_watermark(model=model)
 
 
 w2d("test")
