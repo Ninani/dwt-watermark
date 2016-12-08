@@ -11,13 +11,14 @@ image = 'mis1.jpg'
 watermark = 'qrcode.png' 
 
 def convert_image(image_name, size):
-    img = Image.open('./pictures/' + image_name).resize((size, size))
+    img = Image.open('./pictures/' + image_name).resize((size, size), 1)
     img = img.convert('L')
     img.save('./dataset/' + image_name)
 
-    image_array = np.array(img)
-    image_array = np.float32(image_array) 
-    image_array /= 255 
+    # image_array = np.array(img)
+    # image_array = np.float32(image_array) 
+    # image_array /= 255 
+    image_array = np.array(img.getdata(), dtype=np.float).reshape((size, size))
     print image_array[0][0]               #qrcode white color = 1.0
     print image_array[10][10]             #qrcode black color = 0.0  
 
@@ -184,9 +185,11 @@ def recover_watermark(image_array, model='haar', level = 1):
 
 
 def print_image_from_array(image_array, name):
-    image_array *= 255;
-    image_array =  np.uint8(image_array)
-    img = Image.fromarray(image_array)
+    # image_array *= 255;
+    # image_array =  np.uint8(image_array)
+    image_array_copy = image_array.clip(0, 255)
+    image_array_copy = image_array_copy.astype("uint8")
+    img = Image.fromarray(image_array_copy)
     img.save('./result/' + name)
 
 
@@ -198,17 +201,20 @@ def w2d(img):
     watermark_array = convert_image(watermark, 128)
 
     coeffs_image = process_coefficients(image_array, model, level=level)
+    print_image_from_array(coeffs_image[0], 'LL_after_DWT.jpg')
 
     dct_array = apply_dct(coeffs_image[0])
+    print_image_from_array(dct_array, 'LL_after_DCT.jpg')
 
     dct_array = embed_watermark(watermark_array, dct_array)
+    print_image_from_array(dct_array, 'LL_after_embeding.jpg')
 
     coeffs_image[0] = inverse_dct(dct_array)
+    print_image_from_array(coeffs_image[0], 'LL_after_IDCT.jpg')
 
 
 # reconstruction
     image_array_H=pywt.waverec2(coeffs_image, model)
-
     print_image_from_array(image_array_H, 'image_with_watermark.jpg')
 
 
